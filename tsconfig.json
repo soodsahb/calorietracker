@@ -1,0 +1,14 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@shared/*": ["shared/*"]
+    }
+  },
+  "include": ["app", "src", "__tests__", "shared", "scripts/*.d.ts", "*.d.ts", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "exclude": ["server", "node_modules"]
+}

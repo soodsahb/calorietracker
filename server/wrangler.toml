@@ -1,0 +1,26 @@
+name = "calorietracker-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Secrets are NEVER stored here. Set with:
+#   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put TOKEN_HMAC_SECRET
+# Local dev: put them in .dev.vars (git-ignored).
+
+[vars]
+# Set to "1" to return 503 on /v1/analyze (global spend kill switch).
+KILL_SWITCH = "0"
+
+# Rate limiting: Durable Object store (preferred, atomic counters).
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiterDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiterDO"]
+
+# Alternative (eventually consistent) KV store; uncomment and remove the DO binding to use it:
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT_KV"
+# id = "<kv-namespace-id>"

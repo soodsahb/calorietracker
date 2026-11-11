@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "CalorieTracker",
+    "slug": "calorietracker",
+    "version": "1.0.0",
+    "scheme": "calorietracker",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.example.calorietracker",
+      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
+    },
+    "android": {
+      "package": "com.example.calorietracker",
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        { "cameraPermission": "CalorieTracker uses the camera to photograph your meals for calorie estimation.", "recordAudioAndroid": false }
+      ],
+      [
+        "expo-image-picker",
+        { "photosPermission": "CalorieTracker lets you choose a meal photo from your library for analysis." }
+      ]
+    ],
+    "experiments": { "typedRoutes": false }
+  }
+}
