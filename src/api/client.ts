@@ -151,8 +151,18 @@ export function createApiClient(opts: ApiClientOptions) {
     return token;
   }
 
+  // Single-flight registration: concurrent first requests must not mint several tokens
+  // (each burns the per-IP register budget and the last write wins in SecureStore).
+  let registering: Promise<string> | null = null;
+  function registerOnce(signal?: AbortSignal): Promise<string> {
+    registering ??= register(signal).finally(() => {
+      registering = null;
+    });
+    return registering;
+  }
+
   async function ensureToken(signal?: AbortSignal): Promise<string> {
-    return (await opts.tokenStore.get()) ?? (await register(signal));
+    return (await opts.tokenStore.get()) ?? (await registerOnce(signal));
   }
 
   async function postAnalyze(token: string, input: AnalyzeInput): Promise<Response> {
@@ -187,7 +197,7 @@ export function createApiClient(opts: ApiClientOptions) {
     if (res.status === 401) {
       // stale/invalid install token: re-register once
       await opts.tokenStore.clear();
-      token = await register(input.signal);
+      token = await registerOnce(input.signal);
       res = await postAnalyze(token, input);
     }
     if (!res.ok) throw mapStatus(res.status, res);

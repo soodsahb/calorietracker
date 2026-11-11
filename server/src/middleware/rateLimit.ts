@@ -89,7 +89,33 @@ export interface RateLimitDeps {
 }
 
 export function ipHash(secret: string, ip: string) {
-  return sha256Hex(`${secret}|ip|${ip}`);
+  return sha256Hex(`${secret}|ip|${ipBucket(ip)}`);
+}
+
+/**
+ * Rate-limit identity for an address. IPv6 clients usually control a whole /64 (2^64 addresses),
+ * so per-address IPv6 keys are trivially bypassed by rotating addresses: bucket IPv6 by /64.
+ * IPv4 (and IPv4-mapped IPv6) is keyed per address.
+ */
+export function ipBucket(raw: string): string {
+  const ip = raw.trim().toLowerCase();
+  if (!ip.includes(':')) return ip;
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(ip);
+  if (mapped?.[1]) return mapped[1];
+  const [head = '', tail] = ip.split('::', 2);
+  const h = head ? head.split(':') : [];
+  const t = tail ? tail.split(':') : [];
+  const groups = tail === undefined ? h : [...h, ...Array<string>(Math.max(0, 8 - h.length - t.length)).fill('0'), ...t];
+  if (groups.length < 4 || groups.slice(0, 4).some((g) => !/^[0-9a-f]{1,4}$/.test(g))) return ip;
+  return `${groups.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(':')}::/64`;
+}
+
+/** Global daily cap across all clients (spend guard). Throws 503 once `cap` analyses happened today. */
+export async function enforceGlobalDailyCap(store: RateLimitStore, cap: number, now: number): Promise<void> {
+  if (!(cap > 0)) return;
+  const bucket = Math.floor(now / 1000 / 86400);
+  const count = await store.incr(`global-d:all:${bucket}`, 86400);
+  if (count > cap) throw new HttpError(503, 'service_unavailable', 'Service temporarily unavailable.');
 }
 
 /** Per-IP limiter (used on /v1/register and /v1/analyze). */

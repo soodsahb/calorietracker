@@ -21,7 +21,15 @@ export default function History() {
   const confirmDelete = (m: Meal) =>
     Alert.alert('Delete meal?', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => { await mealsRepo.remove(m.id); deletePhoto(m.photoUri); await refresh(); } },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try {
+          await mealsRepo.remove(m.id);
+          deletePhoto(m.photoUri);
+          await refresh();
+        } catch {
+          Alert.alert('Could not delete', 'Something went wrong deleting this meal. Please try again.');
+        }
+      } },
     ]);
 
   return (

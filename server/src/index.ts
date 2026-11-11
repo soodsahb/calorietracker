@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { consoleLogger } from './logger';
 import { securityHeaders } from './middleware/securityHeaders';
 import { auth } from './middleware/auth';
-import { ipRateLimit, tokenRateLimit, type RateLimitStore } from './middleware/rateLimit';
+import { enforceGlobalDailyCap, ipRateLimit, storeFromEnv, tokenRateLimit, type RateLimitStore } from './middleware/rateLimit';
 import { readLimitedBody } from './middleware/bodyLimit';
 import { issueToken } from './token';
 import { analyse, toBase64 } from './gemini';
@@ -80,6 +80,8 @@ export function createApp(deps: AppDeps = {}) {
     const previousItems = validatePreviousItems(form.get('previousItems') ?? undefined);
     const img = validateImage(new Uint8Array(await file.arrayBuffer()), file.type);
     c.set('imageBytes', img.bytes.length);
+    if (!c.env.GEMINI_API_KEY) throw new HttpError(503, 'service_unavailable', 'Service temporarily unavailable.');
+    await enforceGlobalDailyCap(deps.store ?? storeFromEnv(c.env), Number(c.env.GLOBAL_DAILY_CAP ?? 0), now());
 
     const result = await analyse(
       {

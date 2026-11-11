@@ -49,10 +49,13 @@ export async function migrate(db: SQLiteDatabase): Promise<void> {
   let v = row?.user_version ?? 0;
   while (v < MIGRATIONS.length) {
     const sql = MIGRATIONS[v];
+    const next = v + 1;
+    // Bump user_version inside the same transaction: if the app dies between the DDL and the
+    // version bump, the migration would otherwise be re-run and fail forever ("table exists").
     await db.withTransactionAsync(async () => {
       await db.execAsync(sql);
+      await db.execAsync(`PRAGMA user_version = ${next};`);
     });
-    v += 1;
-    await db.execAsync(`PRAGMA user_version = ${v};`);
+    v = next;
   }
 }

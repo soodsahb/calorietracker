@@ -37,11 +37,17 @@ export default function MealScreen() {
   React.useEffect(() => {
     if (id === 'new') return;
     let live = true;
-    mealsRepo.get(id).then((m) => {
-      if (!live) return;
-      if (m) store.startFromMeal(m);
-      setLoading(false);
-    });
+    mealsRepo.get(id).then(
+      (m) => {
+        if (!live) return;
+        if (m) store.startFromMeal(m);
+        setLoading(false);
+      },
+      () => {
+        // DB error: fall through to "Meal not found" instead of spinning forever
+        if (live) setLoading(false);
+      },
+    );
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);

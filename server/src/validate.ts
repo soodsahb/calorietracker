@@ -32,6 +32,8 @@ export function validateNote(raw: unknown): string | undefined {
   if (typeof raw !== 'string') throw new HttpError(400, 'invalid_note', 'Invalid note.');
   if (raw.length > NOTE_MAX) throw new HttpError(400, 'note_too_long', 'Note is too long.');
   const clean = sanitiseNote(raw);
+  // NFKC can expand a single code point to many (e.g. U+FDFA -> 18 chars): re-check after normalising.
+  if (clean.length > NOTE_MAX) throw new HttpError(400, 'note_too_long', 'Note is too long.');
   return clean.length ? clean : undefined;
 }
 
@@ -48,7 +50,13 @@ export function validatePreviousItems(raw: unknown): z.infer<typeof Item>[] | un
   }
   const r = z.array(Item).max(20).safeParse(json);
   if (!r.success) throw new HttpError(400, 'invalid_previous_items', 'Invalid previous items.');
-  return r.data;
+  // Names are user-editable free text that ends up in the prompt: sanitise like the note
+  // (no delimiter characters, control or zero-width chars).
+  const items = r.data.map((i) => ({ ...i, name: sanitiseNote(i.name) }));
+  if (items.some((i) => i.name.length === 0)) {
+    throw new HttpError(400, 'invalid_previous_items', 'Invalid previous items.');
+  }
+  return items;
 }
 
 // ---------- image ----------

@@ -9,7 +9,7 @@ describe('register + auth', () => {
     expect(res.status).toBe(200);
     const { token: t } = (await res.json()) as { token: string };
     expect(await verifyToken(SECRET, t)).not.toBeNull();
-    expect(await verifyToken('other-secret', t)).toBeNull();
+    expect(await verifyToken('other-secret-0123456789abcdef-xyz!', t)).toBeNull();
   });
 
   it('missing token -> 401', async () => {
@@ -33,7 +33,7 @@ describe('register + auth', () => {
 
   it('token signed with wrong secret -> 401', async () => {
     const { app } = setup();
-    const t = await issueToken('wrong');
+    const t = await issueToken('wrong-secret-0123456789abcdef-xyz!!');
     expect((await app.request(analyzeReq({ token: t }), {}, env)).status).toBe(401);
   });
 

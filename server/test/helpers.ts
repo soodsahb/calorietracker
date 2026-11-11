@@ -4,7 +4,7 @@ import { MemoryStore } from '../src/middleware/rateLimit';
 import { issueToken } from '../src/token';
 import type { Env, LogEntry } from '../src/types';
 
-export const SECRET = 'test-hmac-secret';
+export const SECRET = 'test-hmac-secret-0123456789abcdef';
 export const API_KEY = 'AIzaSyFAKEKEYFORTESTS0000000000000000';
 export const env: Env = { GEMINI_API_KEY: API_KEY, TOKEN_HMAC_SECRET: SECRET };
 

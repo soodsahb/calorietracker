@@ -10,12 +10,16 @@ wrangler secret put GEMINI_API_KEY
 wrangler secret put TOKEN_HMAC_SECRET
 ```
 Local dev: create `.dev.vars` (git-ignored) with both values, then `npm run dev`.
+`TOKEN_HMAC_SECRET` must be at least 32 characters (e.g. `openssl rand -base64 48`); if it is missing or shorter,
+`/v1/register` and `/v1/analyze` fail closed with 503.
 Kill switch: set `KILL_SWITCH=1` var to make `/v1/analyze` return 503.
+Global spend guard: `GLOBAL_DAILY_CAP` (default 2000 in `wrangler.toml`, `0` disables) caps analyses per UTC day across all clients; beyond it `/v1/analyze` returns 503.
 
 ## Rate limiting
 `RateLimitStore` interface (`src/middleware/rateLimit.ts`): `MemoryStore` (tests/dev), `KVStore`, `DurableObjectStore`
 (`RateLimiterDO`, enabled in `wrangler.toml`). Selected from bindings: DO, else KV, else memory.
-Limits: token 20/h and 100/day, IP 60/h (IP only stored hashed).
+Limits: token 20/h and 100/day, IP 60/h (IP only stored hashed; IPv6 is bucketed by /64 so address rotation inside a
+subnet does not reset the limit).
 
 ## Tests
 `npm test` (vitest + coverage gate on `src/validate.ts`), `npm run typecheck`.

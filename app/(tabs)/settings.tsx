@@ -1,8 +1,7 @@
 import React from 'react';
 import { Alert, ScrollView, Share, Switch, Text, View } from 'react-native';
-import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { exportAll, deleteAllData } from '@/services/data';
+import { exportAll, exportFile, deleteAllData } from '@/services/data';
 import { Button, Card, NumberField } from '@/components/ui';
 import { useSettingsStore } from '@/state/settingsStore';
 import { useTodayStore } from '@/state/todayStore';
@@ -21,7 +20,7 @@ export default function Settings() {
   const onExport = async () => {
     try {
       const json = await exportAll();
-      const file = new File(Paths.cache, 'calorietracker-export.json');
+      const file = exportFile();
       if (file.exists) file.delete();
       file.create();
       file.write(json);
@@ -34,7 +33,18 @@ export default function Settings() {
   const onDelete = () =>
     Alert.alert('Delete all data?', 'This removes every meal, photo, setting and your install token from this device. It cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete everything', style: 'destructive', onPress: async () => { await deleteAllData(); reset(); useTodayStore.getState().reset(); } },
+      {
+        text: 'Delete everything', style: 'destructive', onPress: async () => {
+          try {
+            await deleteAllData();
+          } catch {
+            Alert.alert('Delete incomplete', 'Some data could not be deleted. Please try again.');
+          } finally {
+            reset();
+            useTodayStore.getState().reset();
+          }
+        },
+      },
     ]);
 
   const goal = (label: string, key: 'kcalGoal' | 'proteinGoal' | 'carbsGoal' | 'fatGoal', max: number) => (

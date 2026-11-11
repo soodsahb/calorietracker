@@ -28,7 +28,8 @@ export function buildClarifyPrompt(a: ClarifyInput): ClarifyPrompt {
   const q = a.clarifyingQuestion?.trim();
   return {
     question: q ? q : DEFAULT_QUESTION,
-    chips: (a.suggestedAnswers ?? []).map((s) => s.trim()).filter(Boolean).slice(0, 4),
+    // dedupe: chips are React keys and duplicate model answers are useless
+    chips: [...new Set((a.suggestedAnswers ?? []).map((s) => s.trim()).filter(Boolean))].slice(0, 4),
   };
 }
 

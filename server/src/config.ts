@@ -12,3 +12,6 @@ export const LIMITS = {
   tokenDay: { max: 100, windowSec: 86400 },
   ipHour: { max: 60, windowSec: 3600 },
 } as const;
+
+/** HMAC secrets shorter than this are treated as misconfiguration (fail closed). */
+export const MIN_SECRET_LENGTH = 32;
