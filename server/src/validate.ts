@@ -14,12 +14,14 @@ export class HttpError extends Error {
 
 // ---------- note ----------
 
+const STRIP_RE = new RegExp('[\\p{Cc}\\p{Cf}\\p{Co}\\p{Cs}\\u2028\\u2029]', 'gu');
+
 /** NFKC, collapse whitespace, strip control/format/zero-width chars and angle brackets (delimiter safety). */
 export function sanitiseNote(raw: string): string {
   return raw
     .normalize('NFKC')
     .replace(/\s+/gu, ' ')
-    .replace(/[\p{Cc}\p{Cf}\p{Co}\p{Cs}  ]/gu, '')
+    .replace(STRIP_RE, '')
     .replace(/[<>]/g, '')
     .replace(/ {2,}/g, ' ')
     .trim();

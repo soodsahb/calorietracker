@@ -28,7 +28,7 @@ export async function hmacSign(secret: string, data: string): Promise<string> {
 export async function hmacVerify(secret: string, data: string, sigB64: string): Promise<boolean> {
   const sig = b64urlDecode(sigB64);
   if (!sig) return false;
-  return crypto.subtle.verify('HMAC', await hmacKey(secret, ['verify']), sig, enc.encode(data));
+  return crypto.subtle.verify('HMAC', await hmacKey(secret, ['verify']), sig as unknown as ArrayBuffer, enc.encode(data));
 }
 
 export async function sha256Hex(s: string): Promise<string> {
